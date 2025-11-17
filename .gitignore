@@ -1,25 +1,9 @@
-# Data folders
-# ml_data/raw/
-# ml_data/processed/
-# *.wav
-# *.mp3
-# *.opus
+
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
 .venv/
-env/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Metadata
-*.csv
-*.json
+.env/
 
 # IDE
 .vscode/

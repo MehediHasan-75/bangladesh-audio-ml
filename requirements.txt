@@ -3,4 +3,16 @@ pydub>=0.25.0
 pandas>=2.0.0
 librosa>=0.10.0
 numpy>=1.24.0
+
+
+# Deep Learning
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Machine Learning
 scikit-learn>=1.3.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Jupyter
+jupyter>=1.0.0

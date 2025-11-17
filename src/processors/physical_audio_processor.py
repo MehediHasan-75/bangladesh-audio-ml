@@ -12,7 +12,8 @@ from typing import List, Dict, Tuple, Optional
 class PhysicalAudioProcessor:
     """Process physically collected audio files from multiple formats"""
     
-    SUPPORTED_FORMATS = {'.opus', '.m4a', '.mp3', '.aac', '.wav', '.ogg', '.flac', '.wma'}
+    SUPPORTED_FORMATS = {'.opus', '.m4a', '.mp3', '.aac', '.wav', '.ogg', '.flac', '.wma',
+                     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv'}
     
     def __init__(
         self,
