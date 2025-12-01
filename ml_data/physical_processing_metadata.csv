@@ -1,5 +1,0 @@
-original_file,original_format,segment_file,category,segment_number,duration_s,dbfs,speech_percentage
-ml_data/physically_collected/protest/ok1.mp4,.mp4,ml_data/processed/protest/protest_0875.wav,protest,875,10.0,-9.451977848178569,100.0
-ml_data/physically_collected/protest/ok1.mp4,.mp4,ml_data/processed/protest/protest_0876.wav,protest,876,10.0,-10.238064837151724,100.0
-ml_data/physically_collected/protest/ok1.mp4,.mp4,ml_data/processed/protest/protest_0877.wav,protest,877,10.0,-8.849303806635751,100.0
-ml_data/physically_collected/protest/ok1.mp4,.mp4,ml_data/processed/protest/protest_0878.wav,protest,878,10.0,-9.11924501370542,100.0
