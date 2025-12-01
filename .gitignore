@@ -1,0 +1,14 @@
+ml_data/
+data/
+*.wav
+*.mp3
+*.flac
+*.opus
+*.zip
+*.tar
+.venv/
+__pycache__/
+*.pyc
+ml_data/
+data/
+
