@@ -50,10 +50,6 @@ streamlit run app/demo.py
 | `train` | Train engine and rail sounds |
 | `truck` | Heavy truck engine sounds |
 
-### Class Distribution
-
-![Spectrogram Distribution](spectrograms/spectrogram_distribution.png)
-
 ### Pipeline Parameters
 
 | Parameter | Value |
