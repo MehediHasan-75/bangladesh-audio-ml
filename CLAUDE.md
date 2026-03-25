@@ -95,3 +95,12 @@ ml_data/
 ### Quality Control
 
 `src/quality/quality_controller.py` validates processed segments: checks 48kHz sample rate, ~10s duration, and rejects silent/invalid segments. Run after processing to generate `ml_data/quality_report.csv`.
+
+## Git Workflow
+
+After every set of changes, commit and push to GitHub:
+```bash
+git add <changed files>
+git commit -m "descriptive message"
+git push origin main
+```
