@@ -1,0 +1,10 @@
+
+*.flac
+*.opus
+*.zip
+*.tar
+.venv/
+__pycache__/
+*.pyc
+
+/ml_data

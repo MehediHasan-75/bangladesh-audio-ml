@@ -1,0 +1,318 @@
+import os
+import librosa
+import numpy as np
+from pathlib import Path
+import warnings
+import pandas as pd
+from collections import Counter
+import torch
+import torchaudio.transforms as T
+from sklearn.model_selection import train_test_split
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+warnings.filterwarnings('ignore')
+
+# Set up paths
+processed_folder = Path('../ml_data/resampled_16k')
+print(f"Loading from: {processed_folder}")
+
+myVoices = []
+failed_files = []
+
+print("Loading audio dataset...")
+print(f"Source: {processed_folder}\n")
+
+for category_folder in sorted(processed_folder.iterdir()):
+    if category_folder.is_dir():
+        category = category_folder.name
+        audio_files = list(category_folder.glob('*.wav'))
+        
+        print(f"Loading {category:20s}: {len(audio_files):4d} files", end=" ... ")
+        
+        success_count = 0
+        for audio_path in audio_files:
+            try:
+                # Load audio with librosa (sr=None keeps original sample rate)
+                waveform, sample_rate = librosa.load(str(audio_path), sr=None)
+                myVoices.append({
+                    'path': str(audio_path),
+                    'filename': audio_path.name.split("/")[-1],
+                    'waveform': waveform,
+                    'sample_rate': sample_rate,
+                    'category': category,
+                    'duration': len(waveform) / sample_rate
+                })
+                success_count += 1
+            except Exception as e:
+                failed_files.append((category, audio_path.name, str(e)))
+        
+        print(f"✓ {success_count}")
+
+print("✓ Audio loading complete!")
+
+import random
+random.shuffle(myVoices)
+print(myVoices)
+
+
+print(f"\n{'='*60}")
+print(f"DATASET SUMMARY")
+print(f"{'='*60}")
+print(f"Total files loaded: {len(myVoices)}")
+
+if failed_files:
+    print(f"Failed to load: {len(failed_files)} files")
+    for cat, fname, error in failed_files[:5]:  # Show first 5 errors
+        print(f"  - {cat}/{fname}: {error}")
+
+# Show distribution
+print(f"\nCategory Distribution:")
+for cat, count in sorted(Counter([v['category'] for v in myVoices]).items()):
+    print(f"  {cat:20s}: {count:3d} files")
+
+# Show sample rate info
+print(f"\nSample Rate Distribution:")
+sample_rates = Counter([v['sample_rate'] for v in myVoices])
+for sr, count in sorted(sample_rates.items()):
+    print(f"  {sr:6d} Hz: {count:4d} files")
+
+# Duration statistics
+total_duration = sum(v['duration'] for v in myVoices)
+avg_duration = total_duration / len(myVoices) if myVoices else 0
+print(f"\nDuration Statistics:")
+print(f"  Total: {total_duration/60:.2f} minutes")
+print(f"  Average per file: {avg_duration:.2f} seconds")
+print(f"{'='*60}")
+
+
+# Create a list to hold the data for the DataFrame
+df_data = []
+
+# Iterate through the myVoices list
+for audio_item in myVoices:
+    file_name = audio_item['filename']
+    waveform = audio_item['waveform']
+    sample_rate = audio_item['sample_rate']
+    category = audio_item['category']
+    duration = audio_item['duration']
+    df_data.append({
+        'file_name': file_name,
+        'waveform': waveform,
+        'sample_rate': sample_rate,
+        'category': category,
+        'duration': duration,
+    })
+
+# Create the pandas DataFrame
+myVoices_df = pd.DataFrame(df_data)
+
+# Display the first few rows of the DataFrame
+print("DataFrame Head:")
+display(myVoices_df.head())
+
+# Display the value counts for the 'category' column
+print("\nCategory distribution:")
+display(myVoices_df['category'].value_counts())
+
+
+# Calculate audio durations in seconds and extract sample rates
+audio_durations = []
+audio_sample_rates = []
+
+for item in myVoices:
+    waveform = item['waveform']
+    sample_rate = item['sample_rate']
+
+    # Duration = number of samples / sample rate
+    duration = waveform.shape[-1] / sample_rate
+    audio_durations.append(duration)
+    audio_sample_rates.append(sample_rate)
+
+print("Duration Statistics (first 10 files):")
+print(f"Audio Durations (seconds): {audio_durations[:10]}")
+print(f"Audio Sample Rates: {audio_sample_rates[:10]}")
+print(f"\nMin duration: {min(audio_durations):.2f}s")
+print(f"Max duration: {max(audio_durations):.2f}s")
+print(f"Mean duration: {np.mean(audio_durations):.2f}s")
+
+
+def extract_mfcc_features(waveform, sample_rate, n_mfcc=40, n_fft=512, hop_length=160, max_padding=48000):
+    """
+    Extracts MFCC features from an audio waveform at 16kHz.
+    """
+    # Convert numpy array to torch tensor if needed
+    if isinstance(waveform, np.ndarray):
+        waveform = torch.from_numpy(waveform).float()
+    
+    # Ensure waveform is 2D: (channels, samples)
+    if waveform.ndim == 1:
+        waveform = waveform.unsqueeze(0)
+    
+    # Ensure waveform is mono if it has multiple channels
+    if waveform.shape[0] > 1:
+        waveform = torch.mean(waveform, dim=0, keepdim=True)
+    
+    # ✅ Resample to 16kHz if needed
+    target_sample_rate = 16000
+    if sample_rate != target_sample_rate:
+        resampler = T.Resample(sample_rate, target_sample_rate)
+        waveform = resampler(waveform)
+    
+    # Pad or truncate the waveform to a fixed length
+    if waveform.shape[-1] < max_padding:
+        padding = max_padding - waveform.shape[-1]
+        waveform = torch.nn.functional.pad(waveform, (0, padding))
+    elif waveform.shape[-1] > max_padding:
+        waveform = waveform[..., :max_padding]
+
+    # Extract MFCC at 16kHz
+    mfcc_transform = T.MFCC(
+        sample_rate=16000,
+        n_mfcc=n_mfcc,
+        melkwargs={
+            "n_fft": n_fft,
+            "hop_length": hop_length,
+            "n_mels": 128,
+            "f_min": 0,
+            "f_max": 8000,  # Nyquist frequency at 16kHz
+        },
+    )
+    mfcc_features = mfcc_transform(waveform)
+    return mfcc_features.squeeze(0)
+
+print("✓ MFCC extraction function defined for 16kHz audio")
+
+
+
+# List to store extracted features and labels
+extracted_features = []
+
+# Iterate through the myVoices list and extract features
+print("Extracting MFCC features...")
+for i, audio_item in enumerate(myVoices):
+    try:
+        waveform = audio_item['waveform']
+        sample_rate = audio_item['sample_rate']
+        category = audio_item['category']
+
+        # Extract MFCC features
+        features = extract_mfcc_features(waveform, sample_rate)
+
+        # Append features and category to the list
+        extracted_features.append({
+            'features': features,
+            'category': category
+        })
+        
+        if (i + 1) % 100 == 0:
+            print(f"  Processed {i + 1}/{len(myVoices)} files")
+            
+    except Exception as e:
+        print(f"Could not extract features for {audio_item.get('path', 'an audio file')}: {e}")
+        continue
+
+print(f"✓ Feature extraction complete! Extracted {len(extracted_features)} features")
+
+
+# Create a DataFrame from the extracted features and labels
+extracted_features_df = pd.DataFrame(extracted_features)
+
+# Display the first few rows of the DataFrame and its shape
+print("Extracted Features DataFrame:")
+display(extracted_features_df.head())
+print(f"\nShape of the extracted features DataFrame: {extracted_features_df.shape}")
+print(f"Feature shape per sample: {extracted_features_df['features'].iloc[0].shape}")
+print(f"\nCategory distribution:")
+print(extracted_features_df['category'].value_counts())
+
+
+# Shuffle the data
+extracted_features_df_shuffled = extracted_features_df.sample(
+    frac=1.0, 
+    random_state=42
+).reset_index(drop=True)
+
+print("✓ Data shuffled")
+print(f"Original class distribution:")
+print(extracted_features_df_shuffled['category'].value_counts())
+
+extracted_features_df_shuffled.head(10)
+# Extract features and labels
+X = extracted_features_df_shuffled['features']
+y = extracted_features_df_shuffled['category']
+
+# Convert list of tensors to NumPy array
+if all(item.shape == X.iloc[0].shape for item in X):
+    X = torch.stack(list(X)).numpy()
+else:
+    raise ValueError("Feature tensor shapes are inconsistent, cannot stack.")
+
+print(f"Stacked feature shape: {X.shape}")
+
+# First split - Train vs Rest
+X_train_raw, X_temp, y_train_raw, y_temp = train_test_split(
+    X, y, 
+    test_size=0.2, 
+    random_state=42, 
+    stratify=y
+)
+
+print(f"\n✓ First split done")
+print(f"Train (raw): {len(X_train_raw)} samples")
+print(f"Temp: {len(X_temp)} samples")
+
+# Second split - Val vs Test
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, 
+    test_size=0.5, 
+    random_state=42, 
+    stratify=y_temp
+)
+
+print(f"\n✓ Second split done")
+print(f"Validation: {len(X_val)} samples")
+print(f"Test: {len(X_test)} samples")
+
+print(f"Training set BEFORE balancing:")
+print(pd.Series(y_train_raw).value_counts())
+
+# Find minimum class count
+class_counts = Counter(y_train_raw)
+min_samples = min(class_counts.values())
+
+# Undersample each class to min_samples
+balanced_indices = []
+for class_label in class_counts.keys():
+    class_indices = np.where(y_train_raw == class_label)[0]
+    sampled_indices = np.random.choice(
+        class_indices, 
+        size=min_samples, 
+        replace=False
+    )
+    balanced_indices.extend(sampled_indices)
+
+# Shuffle balanced indices
+np.random.shuffle(balanced_indices)
+
+# Create balanced training set
+X_train = X_train_raw[balanced_indices]
+y_train = y_train_raw.iloc[balanced_indices].reset_index(drop=True)
+
+print(f"\nTraining set AFTER undersampling:")
+print(pd.Series(y_train).value_counts())
+
+# Final summary
+print(f"\n{'='*60}")
+print(f"FINAL DATASET SPLITS")
+print(f"{'='*60}")
+print(f"Training set:   {X_train.shape[0]} samples (BALANCED)")
+print(f"Validation set: {X_val.shape[0]} samples (ORIGINAL)")
+print(f"Test set:       {X_test.shape[0]} samples (ORIGINAL)")
+print(f"{'='*60}")
