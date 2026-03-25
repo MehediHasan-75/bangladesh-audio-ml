@@ -1,5 +1,7 @@
 # Bangladesh Audio Data Collection & Processing Pipeline
 
+[![CI](https://github.com/MehediHasan-75/bangladesh-audio-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/MehediHasan-75/bangladesh-audio-ml/actions/workflows/ci.yml)
+
 A comprehensive Python-based audio collection, processing, and quality control pipeline designed for building machine learning datasets. This project handles audio from multiple sources (YouTube and physically collected) in various formats, processes them into standardized 10-second WAV segments, and performs quality validation.
 
 ## 📋 Table of Contents

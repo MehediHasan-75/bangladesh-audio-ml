@@ -9,9 +9,10 @@ A Python pipeline for building ML-ready audio datasets from Bangladeshi audio so
 ## Setup
 
 ```bash
-pip install -r requirements.txt
-# macOS: use mac_requirements.txt instead
-pip install -r mac_requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r mac_requirements.txt   # macOS
+# pip install -r requirements.txt     # Linux/CI
 ```
 
 FFmpeg must be installed separately (`brew install ffmpeg` on macOS).
@@ -33,6 +34,13 @@ Processes all audio/video files in `ml_data/physically_collected/` organized by 
 ### Process a single category
 ```bash
 python scripts/process_physical_category.py <category_name>
+```
+
+### Validate input CSV / output metadata
+```python
+from src.processors.data_validator import validate_youtube_csv, validate_processing_metadata
+validate_youtube_csv("data/youtube_urls.csv")
+validate_processing_metadata("ml_data/processing_metadata.csv")
 ```
 
 ### Process raw YouTube downloads (batch reprocess)
