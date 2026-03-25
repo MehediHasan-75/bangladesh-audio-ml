@@ -1,6 +1,5 @@
 # Bangladeshi Urban Audio ML Dataset & Classifier
 
-[![CI](https://github.com/MehediHasan-75/bangladesh-audio-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/MehediHasan-75/bangladesh-audio-ml/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
