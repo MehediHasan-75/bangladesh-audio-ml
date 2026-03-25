@@ -131,7 +131,7 @@ Full per-class metrics are logged via MLflow (`experiments/track_experiment.py`)
 |---|---|
 | Audio processing | pydub, librosa, FFmpeg |
 | ML / Deep Learning | PyTorch, Hugging Face Transformers |
-| MLOps | MLflow, DVC |
+| MLOps | MLflow |
 | Data pipeline | yt-dlp, pandas, PyYAML |
 | Demo | Streamlit, SHAP |
 | Testing / CI | pytest, GitHub Actions |
@@ -156,12 +156,6 @@ python scripts/process_physical.py
 
 # 4. Run the Streamlit demo
 streamlit run app/demo.py
-```
-
-Reproduce the full DVC pipeline:
-
-```bash
-dvc repro      # collect → process → quality_check
 ```
 
 ---
@@ -190,4 +184,4 @@ bangladeshi-audio-ml/
 - **Data augmentation:** Apply SpecAugment, pitch shifting, and room impulse responses to increase effective dataset size
 - **Real-time inference:** Export model to ONNX and wrap with a FastAPI endpoint for sub-100 ms latency
 - **More categories:** Expand to rickshaw bells, street vendors, rain/weather, and mosque calls
-- **DVC cloud remote:** Switch local DVC storage to S3/GCS for team-scale reproducibility (`dvc remote modify local_storage url s3://your-bucket/path`)
+- **Cloud data versioning:** Integrate S3/GCS storage for team-scale dataset reproducibility
