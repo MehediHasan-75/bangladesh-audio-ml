@@ -43,6 +43,25 @@ validate_youtube_csv("data/youtube_urls.csv")
 validate_processing_metadata("ml_data/processing_metadata.csv")
 ```
 
+### Run an MLflow experiment
+```bash
+python experiments/track_experiment.py
+mlflow ui --port 5000          # open http://localhost:5000
+```
+
+### Run the Streamlit demo
+```bash
+streamlit run app/demo.py
+```
+
+### DVC — reproduce the full pipeline
+```bash
+dvc repro                      # runs collect → process → quality_check
+dvc push                       # push data to remote storage
+dvc pull                       # restore data on a new machine
+```
+To switch from local to cloud storage: `dvc remote modify local_storage url s3://your-bucket/path`
+
 ### Process raw YouTube downloads (batch reprocess)
 ```bash
 python scripts/process_raw.py

@@ -92,6 +92,10 @@ numpy-rms==0.6.0
 packaging==25.0
 pandas==2.3.3
 pandera==0.30.1
+dvc==3.67.0
+mlflow==3.10.1
+streamlit==1.55.0
+shap==0.51.0
 pandocfilters==1.5.1
 parso==0.8.5
 pexpect==4.9.0

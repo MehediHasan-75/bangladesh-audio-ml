@@ -6,5 +6,25 @@
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+.DS_Store
 
+# Data (tracked by DVC)
 /ml_data
+
+# MLflow run artifacts
+experiments/mlruns/
+experiments/mlartifacts/
+
+# DVC local cache
+.dvc/local_remote/
+.dvc/tmp/
+
+# Streamlit temp uploads
+app/_tmp_upload.wav
+
+# Models (large binaries — commit .dvc pointer files instead)
+models/*.pkl
+models/*.pt
+models/*.h5
+models/*.onnx
